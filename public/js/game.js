@@ -22,7 +22,19 @@ var config = {
   function preload() {
     this.load.image('ship', 'assets/spaceShips_001.png');
     this.load.image('otherPlayer', 'assets/enemyBlack5.png');
-    this.load.image('star', 'assets/star_gold.png');
+
+    this.load.image('bananas', 'assets/bananas.png');
+    this.load.image('photograph', 'assets/photograph.png');
+    this.load.image('water', 'assets/water.png');
+    this.load.image('lipstick', 'assets/lipstick.png');
+    this.load.image('tennis', 'assets/tennis.png');
+    this.load.image('mistletoe', 'assets/mistletoe.png');
+    this.load.image('sticky', 'assets/sticky.png');
+    this.load.image('carrot', 'assets/carrot.png');
+    this.load.image('tomato', 'assets/tomato.png');
+    this.load.image('spider', 'assets/spider.png');
+
+    this.load.image('scene', 'assets/scene.png');
   }
   
   function create() {
@@ -30,6 +42,8 @@ var config = {
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
     game.input.mouse.capture = true;
+    this.add.image(400, 300, 'scene');
+    self.starLocations = {};
     this.socket.on('currentPlayers', function (players) {
       Object.keys(players).forEach(function (id) {
         if (players[id].playerId === self.socket.id) {
@@ -59,26 +73,35 @@ var config = {
     this.cursors = this.input.keyboard.createCursorKeys();
   
     this.blueScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#0000FF' });
+    this.blueScoreText.depth = 1;
     this.redScoreText = this.add.text(584, 16, '', { fontSize: '32px', fill: '#FF0000' });
+    this.redScoreText.depth = 1;
     
     this.socket.on('scoreUpdate', function (scores) {
       self.blueScoreText.setText('Blue: ' + scores.blue);
       self.redScoreText.setText('Red: ' + scores.red);
     });
 
-    this.socket.on('starLocation', function (starLocation) {
-      if (self.star) self.star.destroy();
-      self.star = self.physics.add.image(starLocation.x, starLocation.y, 'star');
-      self.physics.add.overlap(self.ship, self.star, function () {
-        if (game.input.mousePointer.leftButtonDown()) {
-          this.socket.emit('starCollected');
+    this.socket.on('starLocations', function (starLocations) {
+      for (let [starId, starData] of Object.entries(starLocations)) {
+        if (starData.found && self.starLocations[starId]) self.starLocations[starId].destroy();
+        if (!starData.found && !self.starLocations[starId]) {
+          self.starLocations[starId] = self.physics.add.image(starData.x, starData.y, starId);
+          self.starLocations[starId].depth = 0;
+          self.physics.add.overlap(self.ship, self.starLocations[starId], function () {
+            if (game.input.mousePointer.leftButtonDown()) {
+              console.log(starId);
+              this.socket.emit('starCollected', starId);
+            }
+          }, null, self);
         }
-      }, null, self);
+      }
     });
   }
   
   function addPlayer(self, playerInfo) {
     self.ship = self.physics.add.image(playerInfo.x, playerInfo.y, 'ship').setOrigin(0.5, 0.5).setDisplaySize(53, 40);
+    self.ship.depth = 1;
     if (playerInfo.team === 'blue') {
       self.ship.setTint(0x0000ff);
     } else {
@@ -94,6 +117,7 @@ var config = {
       otherPlayer.setTint(0xff0000);
     }
     otherPlayer.playerId = playerInfo.playerId;
+    otherPlayer.depth = 1;
     self.otherPlayers.add(otherPlayer);
   }
   

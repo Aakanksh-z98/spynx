@@ -4,9 +4,57 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
 var players = {};
-var star = {
-  x: Math.floor(Math.random() * 700) + 50,
-  y: Math.floor(Math.random() * 500) + 50
+var stars = {
+  bananas: {
+    x: 55+59,
+    y: 39+44,
+    found: false
+  },
+  photograph: {
+    x: 45+573,
+    y: 48+12,
+    found: false
+  },
+  water: {
+    x: 47+115,
+    y: 40+197,
+    found: false
+  },
+  lipstick: {
+    x: 43+445,
+    y: 10+252,
+    found: false
+  },
+  tennis: {
+    x: 36+655,
+    y: 33+201,
+    found: false
+  },
+  mistletoe: {
+    x: 50+24,
+    y: 40+409,
+    found: false
+  },
+  sticky: {
+    x: 31+282,
+    y: 35+317,
+    found: false
+  },
+  carrot: {
+    x: 41+485,
+    y: 20+403,
+    found: false
+  },
+  tomato: {
+    x: 46+693,
+    y: 35+397,
+    found: false
+  },
+  spider: {
+    x: 26+316,
+    y: 15+570,
+    found: false
+  }
 };
 var scores = {
   blue: 0,
@@ -31,7 +79,7 @@ io.on('connection', function (socket) {
   // send the players object to the new player
   socket.emit('currentPlayers', players);
   // send the star object to the new player
-  socket.emit('starLocation', star);
+  socket.emit('starLocations', stars);
   // send the current scores
   socket.emit('scoreUpdate', scores);
   // update all other players of the new player
@@ -53,16 +101,18 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('playerMoved', players[socket.id]);
   });
 
-  socket.on('starCollected', function () {
-    if (players[socket.id].team === 'red') {
-      scores.red += 10;
-    } else {
-      scores.blue += 10;
+  socket.on('starCollected', function (starId) {
+    if (!stars[starId].found) {
+      stars[starId].found = true;
+      if (players[socket.id].team === 'red') {
+        scores.red += 10;
+      } else {
+        scores.blue += 10;
+      }
+      io.emit('starLocations', stars);
+      io.emit('scoreUpdate', scores);
+
     }
-    star.x = Math.floor(Math.random() * 700) + 50;
-    star.y = Math.floor(Math.random() * 500) + 50;
-    io.emit('starLocation', star);
-    io.emit('scoreUpdate', scores);
   });
 });
 
