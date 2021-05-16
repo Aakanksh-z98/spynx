@@ -38,12 +38,11 @@ var config = {
   }
   
   function create() {
+
     var self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
-    game.input.mouse.capture = true;
-    this.add.image(400, 300, 'scene');
-    self.starLocations = {};
+
     this.socket.on('currentPlayers', function (players) {
       Object.keys(players).forEach(function (id) {
         if (players[id].playerId === self.socket.id) {
@@ -53,9 +52,11 @@ var config = {
         }
       });
     });
+
     this.socket.on('newPlayer', function (playerInfo) {
       addOtherPlayers(self, playerInfo);
     });
+
     this.socket.on('disconnected', function (playerId) {
       self.otherPlayers.getChildren().forEach(function (otherPlayer) {
         if (playerId === otherPlayer.playerId) {
@@ -63,6 +64,7 @@ var config = {
         }
       });
     });
+
     this.socket.on('playerMoved', function (playerInfo) {
       self.otherPlayers.getChildren().forEach(function (otherPlayer) {
         if (playerInfo.playerId === otherPlayer.playerId) {
@@ -70,7 +72,6 @@ var config = {
         }
       });
     });
-    this.cursors = this.input.keyboard.createCursorKeys();
   
     this.blueScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#0000FF' });
     this.blueScoreText.depth = 1;
@@ -81,6 +82,11 @@ var config = {
       self.blueScoreText.setText('Blue: ' + scores.blue);
       self.redScoreText.setText('Red: ' + scores.red);
     });
+
+    this.add.image(400, 300, 'scene');
+    this.starLocations = {};
+    game.input.mouse.capture = true;
+    this.cursors = this.input.keyboard.createCursorKeys();
 
     this.socket.on('starLocations', function (starLocations) {
       for (let [starId, starData] of Object.entries(starLocations)) {
